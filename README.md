@@ -3,11 +3,13 @@ Implementation of a simple agent behaviour as a Akka FSM in Scala.
 
 ## How does Hulk works ?
 
-The agent calleds `Bruce` has an internal `patience` variable that determines his level of patience. The initial state of Bruce is `Banner`. As long as he has patience left, Bruce agrees to receive the `Flick` message from the `Reckless` agent but loses patience. When his patience is exhausted and he receives a flick, Bruce switches to the `Hulk` state and sends a `Warning` message to the reckless agent. In the state Hulk, Bruce always responds to a flick with a `HulkSmash` and then he sends a `Calm` message to himself. When Bruce receives this message, he resets his patience variable and returns to the Banner state.
+The agent calleds `bruce` has an internal `patience` variable that determines his level of patience. The initial state of Bruce is `Banner`. As long as he has patience left, Bruce agrees to receive the `Flick` message from the `Reckless` agent but loses patience. When his patience is exhausted and he receives a flick, Bruce switches to the `Hulk` state and sends a `Warning` message to the reckless agent. In the state Hulk, Bruce always responds to a flick with a `HulkSmash` and then he sends a `Calm` message to himself. When Bruce receives this message, he resets his patience variable and returns to the Banner state.
+
+![Bruce's behaviour represented as a FSM](doc/bruce.svg)
 
 ## Contributors
 
-Copyright (C) Maxime MORGE 2019
+Copyright (C) Quentin BAERT and Maxime MORGE 2019
 
 ## License
 
