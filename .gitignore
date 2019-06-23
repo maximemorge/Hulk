@@ -25,5 +25,17 @@ project/plugins/project/
 *.iml
 .cache-main
 
+
+### VS ###
+.metals/
+.vscode/
+.bloop
+project/.bloop
+
+## Misc ###
+project/build.properties
+project/project/
+experiments/figures/
+
 project/build.properties
 project/project/
