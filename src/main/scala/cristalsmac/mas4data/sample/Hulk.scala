@@ -1,15 +1,13 @@
-//Copyright (C) Quentin BAERT 2018
+//Copyright (C) Quentin BAERT and Maxime MORGE 2019
 package cristalsmac.mas4data.sample
 
 import akka.actor._
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import scala.io.StdIn
+import akka.actor.Actor
 
 /**
   * The messages
   */
 sealed trait HulkMessage
-object Start extends HulkMessage
 object Flick extends HulkMessage
 object Warning extends HulkMessage
 object HulkSmash extends HulkMessage
@@ -35,13 +33,13 @@ class Bruce extends Actor with FSM[BruceState, Mind] {
   // Bruce starts as Banner with patience
   startWith(Banner, Mind())
 
-  // When Bruce is Banner, flicks decrease his patience until he becomes Hulk
+  // When Bruce is Banner, the flicks decrease his patience until he becomes Hulk
   when(Banner) {
     case Event(Flick, mind) if mind.patience > 0 =>
       println("Bruce: -Hum...")
       stay using Mind(mind.patience-1)
     case Event(Flick, mind) if mind.patience == 0 =>
-      println("Bruce: -Grrr...")
+      println("Bruce: -Grr...")
       goto(Hulk) using Mind(0) replying Warning
   }
 
@@ -63,42 +61,4 @@ class Bruce extends Actor with FSM[BruceState, Mind] {
 
   // Initialize Bruce
   initialize()
-}
-
-/**
-  * Reckless agent
-  * @param bruce is his partner
-  */
-class Reckless(bruce: ActorRef) extends Actor {
-  def receive : PartialFunction[Any,Unit] = {
-    case Start =>
-      for(i <- 1 to 5){
-        bruce ! Flick
-      }
-    case Warning =>
-      println("Reckless: What ?!")
-    case HulkSmash =>
-      println("Reckless: Ouch !")
-  }
-}
-
-/**
-  * Test Bruce
-  */
-object TestHulk extends App {
-  import Hulk._
-
-  // Create the actor system
-  val system: ActorSystem = ActorSystem("TestHulk")
-
-  try {
-    // Create Bruce and the reckless agent
-    val bruce: ActorRef = system.actorOf(Props(classOf[Bruce]))
-    val reckless: ActorRef = system.actorOf(Props(classOf[Reckless], bruce))
-    reckless ! Start
-    println(">>> Press ENTER to exit <<<")
-    StdIn.readLine()
-  } finally {
-    system.terminate()
-  }
 }
