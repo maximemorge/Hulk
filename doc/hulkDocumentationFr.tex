@@ -1,0 +1,201 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage[utf8x]{inputenc} 
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage[french]{babel}
+\usepackage[round]{natbib}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows,3d,calc,shapes,fit,shapes.geometric,automata,arrows.meta}
+\usepackage{minted}
+
+\newtheorem{exemple}{Exemple}
+
+\title{Spécification et implémentation de comportement d'agent}
+
+\date{\today}
+\author{Quentin Baert, Maxime Morge\\
+Univ. Lille, CNRS, Centrale Lille\\
+UMR 9189 - CRIStAL\\
+F-59000 Lille, France\\
+Email: \{Quentin.Baert,Maxime.Morge\}@univ-lille.fr
+}
+
+\begin{document}
+\maketitle
+
+L'approche centrée individu nécessite la mise en œuvre d'agents
+autonomes. Inspiré du modèle d'acteurs de \cite{hewitt77aij}, nous
+considérons qu'un agent~:
+\begin{enumerate}
+\item possède une adresse unique pour communiquer avec ses pairs par
+  envoi de messages~;
+\item peut créer d'autres agents ;
+\item est muni d'un état mental ;
+\item réagit aux messages reçus selon un comportement.
+\end{enumerate}
+
+\textbf{Message.} Un agent possède une file d'attente qui contient
+l'ensemble des messages qu'il a reçus. Nous considérons ici une
+version simplifiée du modèle de transmission asynchrone de messages
+pour la programmation concurrente~\citep{clinger81foundations}. En
+d'autres termes, nous suppose que~:
+\begin{enumerate}
+\item le délai de transmission des messages est arbitraire
+mais non négligeable ;
+\item l'ordre d'émission/réception des messages est identique par pair\\
+  émetteur-récepteur ;
+\item la distribution des messages est garantie.
+\end{enumerate}
+Contrairement au modèle
+de~\cite{clinger81foundations}, nous faisons l'hypothèse que les
+messages sont livrés exactement un fois.
+
+\textbf{Création d'agents.} Un agent peut être composé de plusieurs
+agents composants avec lesquels il communique. Une telle architecture
+composite d'agent permet d'isoler les différentes activités d'un agent
+pour ainsi faciliter sa conception, l'intelligibilité de son
+comportement et sa mise en œuvre.
+
+\textbf{État mental.} Un agent est muni d'une base de connaissances
+et/ou de croyances. Cette mémoire constitue une représentation
+explicite, locale et subjective de la perception par l'agent du
+système multi-agents mais également de son environnement physique. En
+particulier, la liste de ses accointances est la liste des pairs avec
+lesquels l'agent est capable de communiquer directement par envoi de
+message.
+
+\textbf{Comportement.} Pour déterminer sa prochaine action, un agent
+retire le premier message de sa file d'attente et réagit en fonction
+de son état courant.
+
+Même si tous les agents utilisent le même comportement, chaque agent
+est indépendant. D'une part, chacun possède sa propre file de
+messages, son propre état courant et son propre état mental. Ces
+éléments sont inaccessibles directement par les autres agents : c'est
+le principe d'encapsulation. D'autre part, la mise en œuvre
+indépendante, concurrente et asynchrone de ces comportements permet au
+système d'exécuter l'algorithme multi-agents de manière décentralisée.
+
+\subsection*{Spécification d'un comportement d'agent}
+
+Le comportement d'un agent
+peut être décrit par un automate fini déterministe (en anglais,
+\textit{finite state machine}) qui spécifie comment l'agent doit
+réagir au premier message de sa file en fonction de son état courant
+et de son état mental (cf. figure~\ref{fig:comportement}).
+
+Les actions possibles d'un agent sont :
+\begin{itemize}
+\item l'exécution d'actions sur l'environnement ;
+\item la création d'un autre agent ;
+\item la mise à jour de son état mental ;
+\item l'envoi de messages (dénoté par l'opérateur $\texttt{!}$).
+\end{itemize}
+Un agent peut envoyer un message à l'un de ses pairs ou à lui-même
+(dénoté par la suite \texttt{self}). Dans ce dernier cas, un agent est
+en mesure de déclencher son propre comportement.
+
+\begin{figure}[h!]
+  \centering
+    \centering
+  \begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,
+    node distance=2.5cm,scale=.8,transform shape,
+    align=center,state/.style={circle,draw,minimum size=2cm,thick,fill=gray!10}]
+
+    \node[state,initial] (s1) {État 1};
+    \node[state,right of=s1,xshift=8cm] (s2) {État 2};
+
+    \draw (s1) edge[above] node{$\texttt{émetteur:message if condition} \Rightarrow \texttt{actions}$} (s2);
+  \end{tikzpicture}
+  \caption{Automate fini déterministe spécifiant le comportement d'un
+    agent.  Quand il reçoit un $\texttt{message}$ de la part d'un
+    $\texttt{émetteur}$ dans l'$\texttt{état 1}$ et que la
+    $\texttt{condition}$ est remplie, l'agent effectuent les
+    $\texttt{actions}$ et passe dans l'$\texttt{état 2}$.}
+  \label{fig:comportement}
+\end{figure}
+
+
+\begin{exemple}[Spécification d'un comportement d'agent]
+  \label{ex:hulk}
+  L'automate\\ de la figure~\ref{fig:hulk} spécifie le comportement de
+  l'agent Bruce lors de ses interactions avec un agent
+  $\texttt{reckless}$ (téméraire). L'agent Bruce possède un état
+  mental constité d'une unique variable $\texttt{patience}$ qui
+  représente son niveau de patience. L'état initial de l'agent Bruce
+  est l'état \emph{Banner}. Tant qu'il lui reste de la
+  $\texttt{patience}$, l'agent Bruce accepte de recevoir le message
+  $\texttt{Flick}$ (pichenette) de la part de l'agent
+  $\texttt{reckless}$ mais perd progressivement
+  $\texttt{patience}$. En revanche, lorsque sa $\texttt{patience}$ est
+  nulle et qu'il reçoit une $\texttt{Flick}$, l'agent Bruce passe dans
+  l'état \emph{Hulk} et envoie un message $\texttt{Warning}$ (avertissement) à
+  l'agent $\texttt{reckless}$. Dans l'état \emph{Hulk}, l'agent Bruce
+  répond systématiquement à une $\texttt{Flick}$ par un
+  $\texttt{HulkSmash}$. Après avoir délivré un $\texttt{HulkSmash}$,
+  l'agent Bruce s'envoie un message $\texttt{Calm}$ qui, lorsqu'il
+  le traite, déclenche la réinitialisation de sa variable
+  $\texttt{patience}$ et l'agent repasse dans l'état \emph{Banner}.
+\end{exemple}
+
+\begin{figure}[h!]
+  \centering
+  \input{bruce.tkiz}
+  \caption{Spécification du comportement de l'agent Bruce issu de
+    l'exemple~\ref{ex:hulk}.}
+  \label{fig:hulk}
+\end{figure}
+
+Les automates permettent une spécification complète et formelle du
+comportement des agents.
+
+\subsection*{Implémentation d'un comportement d'agent}
+
+Les comportements d'agents peuvent être implémentés grâce à la boîte à
+outils Akka~\citep{akka} qui permet la construction d'applications
+réactives, concurrentes et distribuées.
+
+Pour illustrer la relation directe entre la spécification d'un
+comportement par un automate fini détermiste et son implémentation en
+grâce à la boîte à outils Akka, la figure~\ref{fig:hulkcode} présente
+l'implémentation du comportement de l'agent Bruce de
+l'exemple~\ref{ex:hulk}. Selon l'API Akka, La classe
+\texttt{ActorSystem} permet de déployer un système multi-agents. Comme
+évoquée à la ligne 26, la classe \texttt{Actor} définit les
+méthodes/propriétés d'un agent et la classe \texttt{FSM} permet
+décrire son comportement grâce à un automate fini déterministe (en
+anglais, \textit{finite state machine}). D'abord est énumérée la liste
+exhaustive des types de messages échangés (lignes 8 à 12) puis celle
+des états courants possibles pour l'agent (lignes 17 à 19). L'état
+mental de l'agent contient l'unique variable \texttt{patience}
+initialisée à $3$ (ligne 25). Un agent \texttt{Bruce} est associé à un
+état courant et à un état mental (ligne 30). L'agent est initialisé
+(ligne 52) dans l'état courant \texttt{Banner} avec un nouvel état
+mental \texttt{Mind} (ligne 3).  Dans cet état courant (ligne 35), il
+peut recevoir un message \texttt{Flick} : soit sa patience est
+positive et il reste dans le même état en décrémentant sa patience
+(ligne 36-38) ; soit sa patience est nulle et il passe dans l'état
+\texttt{Hulk} en émettant le message \texttt{Warning} (ligne
+39-41). Dans l'état courant \texttt{Hulk}, l'agent peut recevoir un
+message \texttt{Flick} ou \texttt{Calm}. Dans le premier cas (lignes
+46-50), il reste dans le même état courant en répondant par le message
+\texttt{HulkSmash} et en s'envoyant à lui-même le message
+\texttt{Calm}. Dans le second cas (ligne 51-452), l'agent retourne dans
+l'état courant \texttt{Banner} avec un état mental réinitialisé.
+
+\begin{figure}[htbp]
+  \inputminted[breaklines,linenos,fontsize=\scriptsize]{scala}{../src/main/scala/cristalsmac/mas4data/sample/Hulk.scala}
+  \caption{Code qui implément le comportement illustré par la
+    figure~\ref{fig:hulk}.}
+  \label{fig:hulkcode}
+\end{figure}
+
+
+En résumé l'automate qui spécifie le comportement d'un agent
+s'implémente naturellement et directement grâce à Akka.
+
+\bibliographystyle{plainnat}
+\bibliography{hulkDocumentation}
+
+\end{document}

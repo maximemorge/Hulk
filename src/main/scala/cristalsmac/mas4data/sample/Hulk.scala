@@ -1,9 +1,7 @@
 //Copyright (C) Quentin BAERT and Maxime MORGE 2019
 package cristalsmac.mas4data.sample
-
 import akka.actor._
 import akka.actor.Actor
-
 /**
   * The messages
   */

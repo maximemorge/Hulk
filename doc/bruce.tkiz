@@ -1,6 +1,6 @@
 \begin{tikzpicture}[->,>=stealth',
   shorten >=1pt,auto,node distance=2.5cm,
-  scale=1,transform shape,align=center,
+  scale=.75,transform shape,align=center,
   state/.style={circle,draw,minimum size=2cm,thick,fill=gray!10}
   ]
 
